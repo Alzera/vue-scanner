@@ -1,0 +1,53 @@
+{
+  "name": "@alzera/vue-scanner",
+  "version": "1.0.0",
+  "description": "Barcode scanner component for Vue apps",
+  "license": "MIT",
+  "author": "Alzera Cita <alzeracita23@gmail.com>",
+  "keywords": [
+    "vue",
+    "qr",
+    "qrcode",
+    "scanner",
+    "reader",
+    "barcode"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alzera/vue-scanner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Alzera/vue-scanner/issues"
+  },
+  "homepage": "https://github.com/Alzera/vue-scanner#readme",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs.js",
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "analyze": "npx vite-bundle-visualizer"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.6",
+    "vite-plugin-dts": "^3.7.3",
+    "vue-tsc": "^1.8.27"
+  },
+  "peerDependencies": {
+    "barcode-detector": "^2.2.4",
+    "vue": "^3.4.21"
+  }
+}
