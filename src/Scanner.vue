@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type ScannerProps from "./types/scanner-props";
 import createDecoder from "./utils/create-decoder"
@@ -20,18 +20,16 @@ const {
 } = defineProps<ScannerProps>()
 
 const devices = ref<MediaDeviceInfo[]>([])
-const selectedDevice = ref<number | undefined>()
+const selectedDevice = ref<number>()
 const preview = ref<HTMLVideoElementExtended>()
 const decoder = computed(() => createDecoder(decoderOptions))
 
 let timeout: NodeJS.Timeout | null = null,
-  stopCamera: (() => void) | null = null
+  stopCamera: (() => void) | null = null,
+  isMounted = false
 
 const handleVideo = (stream: MediaStream) => {
-  if (!preview.value) {
-    timeout = setTimeout(() => handleVideo(stream), 200)
-    return
-  }
+  if (!preview.value) return
 
   if (preview.value.srcObject !== undefined) {
     preview.value.srcObject = stream
@@ -45,11 +43,10 @@ const handleVideo = (stream: MediaStream) => {
     preview.value.src = stream as any
   }
 
-  const streamTrack = stream.getTracks()[0]
-  stopCamera = streamTrack.stop.bind(streamTrack)
+  const [track] = stream.getVideoTracks()
+  stopCamera = track.stop.bind(track)
   preview.value.addEventListener('canplay', handleCanPlay)
 }
-
 
 const handleCanPlay = () => {
   if (!preview.value) return
@@ -61,10 +58,7 @@ const handleCanPlay = () => {
 }
 
 const check = () => {
-  if (!preview.value) {
-    timeout = setTimeout(check, delay)
-    return
-  }
+  if (!preview.value) return
 
   if (preview.value.readyState === preview.value.HAVE_ENOUGH_DATA) {
     const decode = () => {
@@ -84,7 +78,12 @@ const check = () => {
 const release = () => {
   if (timeout) clearTimeout(timeout)
   if (stopCamera) stopCamera()
-  preview.value?.removeEventListener('canplay', handleCanPlay)
+  if (preview.value) {
+    preview.value.removeEventListener('canplay', handleCanPlay)
+    preview.value.src = ''
+    preview.value.srcObject = null
+    preview.value.load()
+  }
 }
 
 const selectedChange = (e: Event) => {
@@ -94,7 +93,9 @@ const selectedChange = (e: Event) => {
   selectedDevice.value = Number.isNaN(v) ? undefined : v
 }
 
-onMounted(() => {
+watch(() => preview.value, (v, __, onCleanup) => {
+  if (!v) return
+
   navigator
     .mediaDevices
     .enumerateDevices()
@@ -104,7 +105,8 @@ onMounted(() => {
       selectedDevice.value = 0
     })
     .catch(err => emit('error', err))
-  return release
+
+  onCleanup(release)
 })
 
 watch(selectedDevice, (v, _, onCleanup) => {
@@ -112,14 +114,27 @@ watch(selectedDevice, (v, _, onCleanup) => {
 
   navigator.mediaDevices
     .getUserMedia({
+      audio: false,
       video: {
         deviceId: devices.value[v].deviceId
       }
     })
-    .then(handleVideo)
+    .then(stream => {
+      if(isMounted) handleVideo(stream)
+      else for (const track of stream.getTracks()) {
+        stream.removeTrack(track)
+        track.stop()
+      }
+    })
     .catch(err => emit('error', err))
 
   onCleanup(release)
+})
+
+onMounted(() => isMounted = true)
+onBeforeUnmount(() => {
+  isMounted = false
+  release()
 })
 </script>
 
