@@ -15,13 +15,14 @@ export default defineConfig({
   build: {
     cssCodeSplit: false,
     lib: {
+      name: 'BarcodeScanner',
       entry: {
+        'useDecoder': resolve(__dirname, 'src/use-decoder.ts'),
         'Scanner': resolve(__dirname, 'src/Scanner.vue'),
         'DropZone': resolve(__dirname, 'src/DropZone.vue'),
         'BarcodeScanner': resolve(__dirname, 'src/BarcodeScanner.vue'),
         'index': resolve(__dirname, 'src/index.ts'),
       },
-      name: 'BarcodeScanner',
     },
     rollupOptions: {
       external: [
@@ -29,7 +30,9 @@ export default defineConfig({
         'vue',
       ],
       output: {
-        exports: "named"
+        globals: {
+          vue: 'Vue'
+        }
       }
     }
   },

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import type { BarcodeDetectorOptions } from "barcode-detector/pure";
 import { ref } from 'vue'
 
-import type ScannerProps from "./types/scanner-props";
 import Scanner from "./Scanner.vue";
 import DropZone from "./DropZone.vue";
 
@@ -10,11 +10,10 @@ const emit = defineEmits<{
   error: [error: any];
 }>();
 const {
-  flipHorizontally,
-  delay,
-  aspectRatio,
   decoderOptions,
-} = defineProps<ScannerProps>()
+} = defineProps<{
+  decoderOptions?: BarcodeDetectorOptions
+}>()
 
 const isScanner = ref(true)
 
@@ -24,8 +23,7 @@ const onError = (err: any) => emit('error', err)
 
 <template>
   <div id="qr-scanner-layout">
-    <Scanner v-if="isScanner" @scan="onScan" @error="onError" :flipHorizontally="flipHorizontally" :delay="delay"
-      :aspectRatio="aspectRatio" :decoderOptions="decoderOptions" />
+    <Scanner v-if="isScanner" @scan="onScan" @error="onError" :decoderOptions="decoderOptions" />
     <DropZone v-else @scan="onScan" @error="onError" :decoderOptions="decoderOptions">
       <slot name="drop-children"></slot>
     </DropZone>

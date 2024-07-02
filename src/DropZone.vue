@@ -1,26 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-
-import type ScannerProps from "./types/scanner-props";
-import createDecoder from "./utils/create-decoder"
+import type { BarcodeDetectorOptions } from "barcode-detector/pure";
+import useDecoder from './use-decoder';
 
 const emit = defineEmits<{
   scan: [value: string];
   error: [error: any];
 }>();
-const { 
+const {
   decoderOptions
-} = defineProps<Pick<ScannerProps, 'decoderOptions'>>()
+} = defineProps<{
+  decoderOptions?: BarcodeDetectorOptions
+}>()
+const decoder = useDecoder(decoderOptions)
 
-const decoder = computed(() => createDecoder(decoderOptions))
-
-const handler = async (file: File) => {
-  try {
-    const value = await decoder.value(file)
-    if (value) emit('scan', value)
-  } catch (error) {
-    emit('error', error)
-  }
+const handler = (file: File) => {
+  decoder
+    .value(file)
+    .then((code) => code && emit('scan', code))
+    .catch(err => emit('error', err))
 }
 const dropHandler = async (e: DragEvent) => {
   if (!e.dataTransfer?.files.length) return;
